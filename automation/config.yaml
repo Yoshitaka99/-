@@ -1,0 +1,40 @@
+# X自動投稿パイプライン設定
+account:
+  genre: "AI活用"
+  # コンセプト（切り口）: 生成プロンプトのペルソナになる
+  persona: >
+    忙しいビジネスパーソン向けに、AIの最新ニュースを「結局自分に何の関係があるのか」
+    まで翻訳して毎日届ける発信者。一次情報に当たり、断定で書く。専門用語は使わない。
+  # 表示名のフック例: 「◯◯｜AIニュースを30秒に翻訳する人」
+
+research:
+  # 元ネタの供給源（無料APIのみ）
+  hackernews_keywords: ["AI", "LLM", "GPT", "Claude", "Gemini", "OpenAI", "Anthropic", "agent", "diffusion"]
+  rss_feeds:
+    - https://openai.com/news/rss.xml
+    - https://www.anthropic.com/rss.xml
+    - https://blog.google/technology/ai/rss/
+    - https://rss.itmedia.co.jp/rss/2.0/aiplus.xml
+    - https://b.hatena.ne.jp/hotentry/it.rss
+  max_items: 12
+
+generation:
+  model: claude-sonnet-5
+  candidates: 3
+  # 曜日別の型ローテーション（0=月曜）。全自動モードでは実体験不要の型のみ使う
+  weekday_types:
+    0: "共感型（週初の憂鬱×AI活用の意見型）"
+    1: "有益・保存型（ツール/手順のリスト、ブックマーク狙い）"
+    2: "有益・保存型（比較表・チェックリスト）"
+    3: "R3 公式情報翻訳型（ニュース+自分の仮説1つ）"
+    4: "R1 元情報+解説型（①②③分解→逆説深掘り）"
+    5: "R5 逆張り断定型（通説の否定→理由→疑問形で投げる）"
+    6: "問いかけ型（リプ収集。「どっち派？」）"
+  banned_phrases: ["RTで拡散", "いいねした人に", "フォロー&RT", "拡散希望"]
+  max_weighted_length: 280   # X の重み付き文字数上限（全角=2）
+
+posting:
+  # GitHub Actions の cron は固定なので、スクリプト側でジッターを足して時刻を散らす
+  jitter_minutes_max: 20
+  # true の間は投稿せず automation/state/queue/ に書き出すだけ（人間レビューモード）
+  dry_run_default: true

@@ -1,0 +1,54 @@
+name: X自動投稿
+
+on:
+  schedule:
+    # JST 6:00 / 12:15 / 21:30（UTC+9）。実際の投稿時刻はスクリプト側で0〜20分ジッター
+    - cron: "0 21 * * *"
+    - cron: "15 3 * * *"
+    - cron: "30 12 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true=キュー出力のみ / false=実投稿"
+        default: "true"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: x-autopost
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存をインストール
+        run: pip install -r automation/requirements.txt
+
+      - name: パイプライン実行
+        working-directory: automation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          # 手動実行時は入力値、スケジュール実行時はリポジトリ変数 AUTOPOST_DRY_RUN（未設定なら config の既定=true）
+          DRY_RUN: ${{ github.event.inputs.dry_run || vars.AUTOPOST_DRY_RUN || '' }}
+        run: python pipeline.py
+
+      - name: 状態ファイルをコミット
+        run: |
+          git config user.name "x-autopost-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add automation/state
+          git diff --cached --quiet || git commit -m "chore: autopost state $(date -u +%Y-%m-%dT%H:%M)"
+          git push
