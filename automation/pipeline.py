@@ -64,11 +64,13 @@ def main():
     else:
         data = post_to_x(chosen["text"])
         record["tweet_id"] = data["id"]
-        # 元ネタのリンクはリプ欄へ（本文にURLを置かない原則）
-        try:
-            reply_to_x(f"元ネタはこちら\n{result['source_url']}", data["id"])
-        except Exception as e:
-            print(f"[pipeline] リプ欄リンク失敗（本体は投稿済み）: {e}")
+        # 元ネタのリンクはリプ欄へ（本文にURLを置かない原則）。
+        # URL付き投稿は$0.20/件と高額なので config で明示的に有効化した場合のみ
+        if cfg["posting"].get("source_link_reply"):
+            try:
+                reply_to_x(f"元ネタはこちら\n{result['source_url']}", data["id"])
+            except Exception as e:
+                print(f"[pipeline] リプ欄リンク失敗（本体は投稿済み）: {e}")
 
     # 5. 記録（ネタの再利用防止）
     STATE.mkdir(exist_ok=True)

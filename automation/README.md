@@ -13,15 +13,48 @@ GitHub Actions (JST 6:00 / 12:15 / 21:30 + ジッター0〜20分)
 
 ## セットアップ
 
-1. **X API**: [developer.x.com](https://developer.x.com) でアプリ作成（無料枠: 月500投稿で十分）。
-   User authentication settings で **Read and Write** を有効化してから
-   API Key / Secret、Access Token / Secret を発行。
-2. **GitHubリポジトリの Settings → Secrets and variables → Actions** に登録:
-   - Secrets: `ANTHROPIC_API_KEY`, `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`
-   - Variables: `AUTOPOST_DRY_RUN` = `true`（レビュー期間が終わったら `false` に）
-3. **Xのアカウント設定**: 設定 → アカウント → 「自動化されたアカウント」ラベルを設定
-   （X運営ポリシー上、自動投稿アカウントは明示が必要）。
-4. ジャンルや投稿の型を変えるときは `config.yaml` を編集。
+### 1. X APIキーの取得（2026年2月〜は従量課金制）
+
+X APIは2026年2月に旧無料枠が廃止され、新規は**pay-per-use（従量課金）**のみ。
+審査なし・セルフサービスで即日取得できる。
+
+1. 運用するXアカウントでログインした状態で [developer.x.com](https://developer.x.com) にアクセスし、
+   開発者利用規約に同意（電話番号・メール認証済みのアカウントが必要）
+2. デベロッパーコンソールでプロジェクト＋アプリを作成
+3. アプリの **User authentication settings** を設定:
+   - App permissions: **Read and Write**（これを忘れると投稿が403になる）
+   - Type of App: Web App / Automated App or Bot
+   - Callback URL / Website URL: 適当な自サイトURLでよい（例: このリポジトリのURL）
+4. **Keys and tokens** タブで取得（権限変更後にAccess Tokenを**再生成**すること）:
+   - API Key / API Key Secret
+   - Access Token / Access Token Secret（「Created with Read and Write permissions」表示を確認)
+5. コンソールでクレジットをチャージ（$5〜10で数ヶ月分。下記コスト参照）
+
+**運用コスト目安**: 投稿$0.015/件。1日3投稿×30日 = 90件 ≒ **月$1.35**。
+※URL付き投稿は$0.20/件と13倍高いため、config の `source_link_reply` は既定off。
+Claude API側は1日3回の生成で月$1前後（Sonnet使用時）。**合計で月$2〜3程度**。
+
+### 2. 疎通確認
+
+```bash
+cd automation && pip install -r requirements.txt
+export X_API_KEY=... X_API_SECRET=... X_ACCESS_TOKEN=... X_ACCESS_TOKEN_SECRET=... ANTHROPIC_API_KEY=...
+python check_credentials.py   # 課金される書き込みはせず認証だけ確認
+python pipeline.py            # DRY RUN: state/queue/ に投稿案が出る
+```
+
+### 3. GitHubに登録
+
+**Settings → Secrets and variables → Actions**:
+- Secrets: `ANTHROPIC_API_KEY`, `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`
+- Variables: `AUTOPOST_DRY_RUN` = `true`（レビュー期間後に `false` へ）
+
+### 4. Xのアカウント設定
+
+設定 → アカウント → 「自動化されたアカウント」ラベルを設定
+（X運営ポリシー上、自動投稿アカウントは明示が必要）。
+
+ジャンルや投稿の型を変えるときは `config.yaml` を編集。
 
 ## 運用の推奨手順（重要）
 

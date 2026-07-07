@@ -38,3 +38,7 @@ posting:
   jitter_minutes_max: 20
   # true の間は投稿せず automation/state/queue/ に書き出すだけ（人間レビューモード）
   dry_run_default: true
+  # 元ネタURLをリプ欄に自動投稿するか。
+  # X API従量課金でURL付き投稿は$0.20/件（通常投稿$0.015の13倍）のため既定はoff。
+  # offの場合、元ネタURLは投稿記録(posted.jsonl)に残るので手動で貼れる
+  source_link_reply: false
